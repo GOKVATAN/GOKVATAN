@@ -1,0 +1,481 @@
+import math              # Gerekli kütüphanelerin çağırılması bu bölümde gerçekleşmiştir. 
+import numpy as np
+
+                                        #BAŞLANGIÇ DEĞERLERİ TANIMLAMA
+md1c = 11.5  
+
+cp = 1002.54
+
+cv = 715.49       #Specific Heat at Constant Pressure and Volume değerleri 
+
+R = cp - cv       #https://curiosityfluids.com/2019/02/15/air-properties-calculator/ sitesinden alınmıştır.
+
+Gama = cp / cv
+
+Pi = np.pi
+
+e = math.e
+
+N = 27300 *0.9 # %90 Düzeltilmiş dönüş hızı. 
+
+
+                                        #DIŞ KOŞUL DEĞERLERİNİN HESAPLANMASI
+                
+rmean = 0.1145   # Deniz seviyesinde bulunan radius değerleri kullanılmıştır.
+
+Ts0 = 218.805    # Giriş koşulları dışarıdaki 0.9 mach hızından dolayı durgun değerlerdir. 
+
+Ps0 = 23842      # Giriş koşulları dışarıdaki 0.9 mach hızından dolayı durgun değerlerdir. 
+
+M0 = 0.9 
+Pt1 = Ps0 * ((1+((Gama-1)/2)*(M0**2))**(Gama/(Gama-1)))    # Total değerlere statik ve mach değeri ile geçilmiştir. 
+
+Pt1Ref = 101325           # Deniz seviyesinde tasarlandığından dolayı referans değerler deniz seviyesinden alınmıştır. 
+
+Tt1 = Ts0 * ((1+((Gama-1)/2)*(M0**2)))                     # Total değerlere statik ve mach değeri ile geçilmiştir. 
+
+Tt1Ref = 288.15           # Deniz seviyesinde tasarlandığından dolayı referans değerler deniz seviyesinden alınmıştır.  
+
+M1 = 0.498                # Bilinen kütlesel debi ile alanın birinci rotor girişinde deniz seviyesindeki değerle aynı 
+                          # olması için gereken Mach değeri Numeric yöntemlerle bulunmuştur.  
+    
+Ps1 = Pt1 / ((1+((Gama-1)/2)*(M1**2))**(Gama/(Gama-1)))  
+
+Ts1 = Tt1 / ((1+((Gama-1)/2)*(M1**2)))
+
+md1 = (md1c * (Pt1 / Pt1Ref)) / ((Tt1 / Tt1Ref)**0.5)  # Şartnamede verilen düzeltilmiş debin, gerçek debiye 
+                                                       # dönüştürülmüştür.    
+    
+Nc = N / ((Tt1 / Tt1Ref)**0.5)  # Düzeltilmiş hız (Corrected Speed) dönüş sayısını eğer ki deniz seviyesindeki sıcaklık 
+                                # koşulu olsaydı ne kadar döneceğini gösteren bir parametredir.
+                                # (https://handwiki.org/wiki/Engineering:Corrected_speed)
+                                
+                
+                                        #ROTOR-1 
+
+#ORTA ÇİZGİ GİRİŞ DEĞERERİ 
+
+SolidityMean = 2                    # Deniz seviyesinde bulunan katılık değerleri kullanılmıştır. 
+
+U1 = (2*N*Pi*rmean) / 60            # Hız üçgenleri çıkarılmıştır. 
+
+Vax1 = M1 * ((Gama*R*Ts1)**0.5)
+
+W1 = ((Vax1**2)+(U1**2))**0.5       # Göreceli hız. 
+
+Rho1 = Ps1 / (R*Ts1)
+
+A1 = md1 / (Rho1*Vax1)              # Yukarıda da belirtildiği gibi düzeltilmiş
+
+TanBeta1 = U1 / Vax1 
+
+degreeBeta1 = math.degrees(math.atan(TanBeta1))
+
+M1Rel = W1 / ((R*Ts1*Gama)**0.5)
+
+Pt1Rel = Ps1 * ((1+((Gama-1)/2)*(M1Rel**2))**(Gama/(Gama-1)))
+
+Phi1 = Vax1 / U1
+
+Vteta1 = 0                          # Havanın dik geldiği kabulünden dolayı teğetsel hız sıfırdır. 
+
+
+#ORTA ÇİZGİ ÇIKIŞ DEĞERLERİ
+
+DeltaBeta1 = 14                     # Havanın deniz seviyesindeki kadar döndürüldüğü kabul alınmıştır. 
+
+degreeBeta2 = degreeBeta1 - DeltaBeta1
+
+TanBeta2 = math.tan(math.radians(degreeBeta2))
+
+Phi2 = Phi1 * 0.95                  # Çıkış akış katsayısı, giriştekinin 0.95 katı olacak şekilde kabul yapılmıştır.
+
+U2 = U1                             # Orta çizgi sabit kabul edildiğinden dolayı U değerleri sabittir. 
+
+Vax2 = U2 * Phi2
+
+Wteta2 = TanBeta2 * Vax2            # Göreceli teğetsel hız. 
+
+W2 = ((Wteta2**2)+(Vax2**2))**0.5   # Göreceli hız. 
+
+Vteta2 = U2 - Wteta2
+
+V2 = ((Vteta2**2)+(Vax2**2))**0.5
+
+DeltaH = U2 * (Vteta2 - Vteta1)     # Euler turbomakineleri denklemi ile entalpi artışı hesaplanmıştır. 
+
+Psi1 = DeltaH / (U1**2)             # İş Katsayısı hesaplanmıştır. 
+
+CosBeta2 = math.cos(math.radians(degreeBeta2))
+
+TanAlfa2 = Vteta2 / Vax2 
+
+degreeAlfa2 = math.degrees(math.atan(TanAlfa2))
+
+wL1 = 0.007 * (2*SolidityMean / CosBeta2)      # Bilinen katılık değerleri ve döndürme miktarına göre çıkıştaki beta
+                                               # açısı ile kayıp faktörü bulunmuştur. 
+
+Tt2 = (DeltaH / cp) + Tt1
+
+Ts2 = Tt2 - ((V2**2)/(2*cp))
+
+M2 = V2 / ((R*Ts2*Gama)**0.5)
+
+M2Rel = W2 / ((R*Ts2*Gama)**0.5)
+
+Pt2Rel = Pt1Rel - (wL1 * (Pt1Rel - Ps1))       # Kayıp faktörü kullanılarak göreceli basınç değeri bulunmuştur. 
+
+Ps2 = Pt2Rel / ((1+((Gama-1)/2)*(M2Rel**2))**(Gama/(Gama-1)))
+
+Pt2 = Ps2 *  ((1+((Gama-1)/2)*(M2**2))**(Gama/(Gama-1)))  # Göreceli basınç değeri ile bulunan statik basınçla total 
+                                                          # basınç değerine geçiş yapılmıştır. 
+
+PR1 = Pt2 / Pt1
+
+TR1 = Tt2 / Tt1 
+
+IsenVerim1 = ((PR1**((Gama-1)/Gama))-1) / (TR1 - 1)
+
+                                        #STATOR-1
+
+#ORTA ÇİZGİ GİRİŞ DEĞERLERİ 
+
+Vax3 = Vax2    # Rotor çıkış hız üçgeni ile stator giriş hız üçgenine hemen hemen aynıdır o yüzden değerler eşit
+               # kabul edilmiştir. 
+
+V3 = V2 
+
+Vteta3 = Vteta2 
+
+degreeAlfa3 = degreeAlfa2
+
+Pt3 = Pt2
+
+Ps3 = Ps2 
+
+Tt3 = Tt2 
+
+Ts3 = Ts2
+
+#ORTA ÇİZGİ ÇIKIŞ DEĞERLERİ
+
+Tt4 = Tt3             # Enerji katılmadığından statorda sıcaklık değişimi yoktur ve girişteki değer sabit kabul edilmiştir
+
+SolidityHubS = 1.83   # Deniz seviyesinde bulunan katılık değerleri kullanılmıştır.
+
+rhubs = 0.08          # Deniz seviyesinde bulunan radius değerleri kullanılmıştır.
+
+SolidityMeanS = SolidityHubS * (rhubs / rmean)
+
+DeltaAlfa1 = 40       # Havanın deniz seviyesindeki kadar döndürüldüğü kabul alınmıştır.
+
+degreeAlfa4 = degreeAlfa3 - DeltaAlfa1
+
+TanAlfa4 = math.tan(math.radians(degreeAlfa4))
+
+V4 = Vax1             # Havanın rotora giriş hızı ile statorun çıkış hızı aynı kabul edilmiştir. (TEI -Guideline) 
+
+CosAlfa4 = math.cos(math.radians(degreeAlfa4))
+
+Vax4 = V4 * CosAlfa4 
+
+Vteta4 = TanAlfa4 * Vax4 
+
+wL2 = 0.007 * (2*SolidityMeanS / CosAlfa4)  # Rotorda yapıldığı gibi kayıp faktörü bulunmuş ve bu kayıp faktörü ile 
+                                            # basınç değerlerine geçiş yapılmıştır. 
+
+Pt4 = Pt3 - (wL2 * (Pt3 - Ps3)) 
+
+Ts4 = Tt4 - ((V4**2)/(2*cp))
+
+M4 = V4 / ((R*Ts4*Gama)**0.5)
+
+Ps4 = Pt4 / ((1+((Gama-1)/2)*(M4**2))**(Gama/(Gama-1)))
+
+
+
+                                        #KADEME-1 DEĞERLERİNİN HESAPLANMASI 
+
+PRKademe1 = Pt4 / Pt1    # Birinci kademenin sonunda (Rotor1 + Stator1) basınçlandırma oranı ve Isentropic verim hesapaları
+                         # yapılmıştır. 
+TRKademe1 = Tt4 / Tt1 
+
+IsenVerimKademe1 = ((PRKademe1**((Gama-1)/Gama))-1) / (TRKademe1 - 1)
+
+                                        #ROTOR-2 
+
+#ORTA ÇİZGİ GİRİŞ DEĞERLERİ 
+
+SolidityMeanR2 = 1.674   # Deniz seviyesinde bulunan katılık değerleri kullanılmıştır.
+
+U5 = U1 
+
+Vax5 = Vax4   # Stator çıkışındaki hız değerleri, ikinci rotorun giriş hız değerleri olarak alınmıştır. 
+
+V5 = V4 
+
+Vteta5 = Vteta4 
+
+Pt5 = Pt4 
+
+Tt5 = Tt4 
+
+Ps5 = Ps4 
+
+Ts5 = Ts4 
+
+Wteta5 = U5 - Vteta5 
+
+W5 = ((Wteta5**2)+(Vax5**2))**0.5
+
+MRel5 = W5 / ((R*Ts5*Gama)**0.5)
+
+Pt5Rel = Ps5 * ((1+((Gama-1)/2)*(MRel5**2))**(Gama/(Gama-1)))
+
+TanBeta5 = Wteta5 / Vax5 
+
+degreeBeta5 = math.degrees(math.atan(TanBeta5))
+
+TanAlfa5 = Vteta5 / Vax5 
+
+degreeAlfa5 = math.degrees(math.atan(TanAlfa5))
+
+Phi5 = Vax5 / U5
+
+#ORTA ÇİZGİ ÇIKIŞ DEĞERLERİ
+
+DeltaBeta2 = 15                         # Havanın deniz seviyesindeki kadar döndürüldüğü kabul alınmıştır.
+
+degreeBeta6 = degreeBeta5 - DeltaBeta2 
+
+TanBeta6 = math.tan(math.radians(degreeBeta6))
+
+CosBeta6 = math.cos(math.radians(degreeBeta6))
+
+Phi6 = Phi5 * 0.95                      #Çıkış akış katsayısı, giriştekinin 0.95 katı olacak şekilde kabul yapılmıştır.
+
+U6 = U5 
+
+Vax6 = U6 * Phi6 
+
+Wteta6 = TanBeta6 * Vax6 
+
+W6 = ((Wteta6**2)+(Vax6**2))**0.5
+
+Vteta6 = U6 - Wteta6 
+
+V6 = ((Vteta6**2)+(Vax6**2))**0.5
+
+DeltaH2 = U6 * (Vteta6 - Vteta5)
+
+Psi2 = DeltaH2 / (U6**2)
+
+Tt6 = (DeltaH2 / cp) + Tt5 
+
+Ts6 = Tt6 - ((V6**2)/(2*cp))
+
+M6 = V6 / ((R*Ts6*Gama)**0.5)
+
+M6Rel = W6 / ((R*Ts6*Gama)**0.5)
+
+wL3 = 0.007 * (2*SolidityMeanR2 / CosBeta6)
+
+Pt6Rel = Pt5Rel - (wL3 * (Pt5Rel - Ps5))
+
+Ps6 = Pt6Rel / ((1+((Gama-1)/2)*(M6Rel**2))**(Gama/(Gama-1)))
+
+Pt6 = Ps6 * ((1+((Gama-1)/2)*(M6**2))**(Gama/(Gama-1)))
+
+PR2 = Pt6 / Pt5
+
+TR2 = Tt6 / Tt5
+
+IsenVerim2 = ((PR2**((Gama-1)/Gama))-1) / (TR2 - 1)
+
+                                        #STATOR-2
+
+#ORTA ÇİZGİ GİRİŞ DEĞERLERİ  
+
+SolidityHubS2 = 1.83       # Deniz seviyesinde bulunan katılık değerleri kullanılmıştır. 
+
+rhubs2 = 0.088             # Deniz seviyesinde bulunan radius değerleri kullanılmıştır.
+
+SolidityMeanS2 = SolidityHubS2 * (rhubs2 / rmean)  # Sabit veter değeri olduğu için orta çizgideki katılık değerinin 
+                                                   # bulunması için türetilmiş formül. 
+
+V7 = V6                    # İkinci rotor çıkışındaki hız değerleri , stator girişinde aynı alınmıştır. 
+
+Vteta7 = Vteta6 
+
+Vax7 = Vax6 
+
+TanAlfa7 = Vteta7 / Vax7 
+
+degreeAlfa7 = math.degrees(math.atan(TanAlfa7))
+
+Pt7 = Pt6
+
+Ps7 = Ps6
+
+Tt7 = Tt6
+
+Ts7 = Ts6
+
+#ORTA ÇİZGİ ÇIKIŞ DEĞERLERİ
+
+DeltaAlfa2 = 40             # Havanın deniz seviyesindeki kadar döndürüldüğü kabul alınmıştır.
+
+degreeAlfa8 = degreeAlfa7 - DeltaAlfa2 
+
+V8 = V5                    # Havanın rotora giriş hızı ile statorun çıkış hızı aynı kabul edilmiştir. (TEI -Guideline) 
+
+CosAlfa8 = math.cos(math.radians(degreeAlfa8))
+
+Vax8 = V8 * CosAlfa8 
+
+Vteta8 = ((V8**2)-(Vax8**2))**0.5
+
+wL4 = 0.007 * (2*SolidityMeanS2 / CosAlfa8)
+
+Pt8 = Pt7 - (wL4 * (Pt7-Ps7))
+
+Tt8 = Tt7
+
+Ts8 = Ts7
+
+M8 = V8 / ((R*Ts8*Gama)**0.5)
+
+Ps8 = Pt8 / ((1+((Gama-1)/2)*(M6**2))**(Gama/(Gama-1)))
+
+                                        #KADEME-2 DEĞERLERİNİN HESAPLANMASI
+
+PRKademe2 = Pt8 / Pt5 
+
+TRKademe2 = Tt8 / Tt5 
+
+IsenVerimKademe2 = ((PRKademe2**((Gama-1)/Gama))-1) / (TRKademe2 - 1)
+
+                                        #FANIN GENEL DEĞERLERİNİN HESAPLANMASI
+
+OPR = Pt8 / Pt1             # Birinci rotorun girişindeki değerler ile ikinci statorun çıkışındaki değerler kullanılarak
+                            # operasyonel basınç oranı ve sıcaklık oranları bulunmuş ardından genel fan verimi
+OTR = Tt8 / Tt1             # hesaplanmıştır. 
+
+IsenVerimG = ((OPR**((Gama-1)/Gama))-1) / (OTR - 1)
+
+
+#Sonuç Yazdırma 
+print("Giriş Şartları : ")
+print("Total Temp : ", Tt1)
+print("Total Pressure : ", Pt1)             
+print("Static Temp : ", Ts1)             
+print("Static Pressure : ", Ps1)
+print("Gerçek Debi : ", md1)
+print("Corrected Rpm : ", Nc)
+print("Gerçek Rpm : ", N )
+print("-------------------------------------")
+print("Rotor 1 Inlet: ")
+print("Area : ", A1 )
+print("Axial Velocity : ", Vax1)
+print("Tangential Velocity : ", U1)
+print("Relative Velocity :",W1)
+print("Beta Açısı : ", degreeBeta1)
+print("Relative Pressure : ", Pt1Rel)
+print("-------------------------------------")
+print("Rotor 1 Outlet: ")
+print("Axial Velocity : ", Vax2)
+print("Tangential Velocity : ", U2)
+print("Relative Velocity :",W2)
+print("Abs Velocity : ", V2)
+print("Abs Tangential Velocity : ", Vteta2)
+print("Relative Tangential Velocity : " , Wteta2)
+print("Beta Açısı : ", degreeBeta2)
+print("Enthalpy Rise :" , DeltaH)
+print("Work Coefficient : ", Psi1)
+print("Total Temp : ", Tt2)
+print("Total Pressure : ", Pt2)
+print("Relative Pressure : ", Pt2Rel)
+print("Loss Factor : ", wL1)
+print("Pressure Ratio : ", PR1)
+print("Isentropic Verim : ", IsenVerim1)
+print("-------------------------------------")
+print("Stator 1 Inlet : ")
+print("Axial Velocity : ", Vax3)
+print("Abs Velocity : ", V3)
+print("Abs Tangential Velocity : ", Vteta3)
+print("Beta Açısı : ", degreeAlfa3)
+print("Total Temp : ", Tt3)
+print("Total Pressure : ", Pt3)
+print("Static Sıcaklık : ", Ts3)
+print("Static Pressure : ", Ps3)
+print("-------------------------------------")
+print("Stator 1 Outlet : ")
+print("Axial Velocity : ", Vax4)
+print("Abs Velocity : ", V4)
+print("Abs Tangential Velocity : ", Vteta4)
+print("Alfa Açısı : ", degreeAlfa4)
+print("Loss Factor : ", wL2)
+print("Total Temp : ", Tt4)
+print("Total Pressure : ", Pt4)
+print("Static Sıcaklık : ", Ts4)
+print("Static Pressure : ", Ps4)
+print("-------------------------------------")
+print("1. Kademe Değerleri : ")
+print("Pressure Ratio : ", PRKademe1)
+print("Isentropic Verim : ", IsenVerimKademe1)
+print("-------------------------------------")
+print("Rotor 2 Inlet: ")
+print("Axial Velocity : ", Vax5)
+print("Tangential Velocity : ", U5)
+print("Relative Velocity :",W5)
+print("Beta Açısı : ", degreeBeta5)
+print("Alfa Açısı : ", degreeAlfa5)
+print("Relative Pressure : ", Pt5Rel)
+print("Total Temp : ", Tt5)
+print("Total Pressure : ", Pt5)
+print("-------------------------------------")
+print("Rotor 2 Outlet: ")
+print("Axial Velocity : ", Vax6)
+print("Tangential Velocity : ", U6)
+print("Relative Velocity :",W6)
+print("Abs Velocity : ", V6)
+print("Abs Tangential Velocity : ", Vteta6)
+print("Relative Tangential Velocity : " , Wteta6)
+print("Beta Açısı : ", degreeBeta6)
+print("Enthalpy Rise :" , DeltaH2)
+print("Work Coefficient : ", Psi2)
+print("Loss Factor : ", wL3)
+print("Total Temp : ", Tt6)
+print("Total Pressure : ", Pt6)
+print("Relative Pressure : ", Pt6Rel)
+print("Pressure Ratio : ", PR2)
+print("Isentropic Verim : ", IsenVerim2)
+print("-------------------------------------")
+print("Stator 2 Inlet : ")
+print("Axial Velocity : ", Vax7)
+print("Abs Velocity : ", V7)
+print("Abs Tangential Velocity : ", Vteta7)
+print("Beta Açısı : ", degreeAlfa7)
+print("Total Temp : ", Tt7)
+print("Total Pressure : ", Pt7)
+print("Static Sıcaklık : ", Ts7)
+print("Static Pressure : ", Ps7)
+print("-------------------------------------")
+print("Stator 2 Outlet : ")
+print("Axial Velocity : ", Vax8)
+print("Abs Velocity : ", V8)
+print("Abs Tangential Velocity : ", Vteta8)
+print("Alfa Açısı : ", degreeAlfa8)
+print("Loss Factor : ", wL4)
+print("Total Temp : ", Tt8)
+print("Total Pressure : ", Pt8)
+print("Static Sıcaklık : ", Ts8)
+print("Static Pressure : ", Ps8)
+print("-------------------------------------")
+print("2. Kademe Değerleri : ")
+print("Pressure Ratio : ", PRKademe2)
+print("Isentropic Verim : ", IsenVerimKademe2)
+print("-------------------------------------")
+print("Motorun Genel Değerleri : ")
+print("Pressure Ratio : ", OPR)
+print("Isentropic Verim : ", IsenVerimG)
