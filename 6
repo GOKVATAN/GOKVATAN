@@ -1,0 +1,54 @@
+Sub SimetrikUcgenCarp()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    Dim yuzde As Double
+    yuzde = 0.45 ' Maksimum yüzde
+
+    Dim veriAraligi As Range
+    Set veriAraligi = ws.Range("J2:J100") ' Verilerin olduğu aralık
+
+    Dim maxDeger As Double
+    maxDeger = Application.WorksheetFunction.Max(veriAraligi)
+
+    Dim i As Long, tepeIndex As Long
+    Dim startRow As Long, endRow As Long
+    startRow = veriAraligi.Row
+    endRow = startRow + veriAraligi.Rows.Count - 1
+
+    ' Tepe noktasını bul
+    For i = startRow To endRow
+        If ws.Cells(i, "J").Value = maxDeger Then
+            tepeIndex = i
+            Exit For
+        End If
+    Next i
+
+    ' Maksimum mesafe (en uçtaki hücre tepeye kaç satır uzaksa)
+    Dim maxMesafe As Long
+    maxMesafe = Application.WorksheetFunction.Max(tepeIndex - startRow, endRow - tepeIndex)
+
+    ' Her hücre için oran hesapla ve uygula
+    For i = startRow To endRow
+        Dim orijinalDeger As Variant
+        orijinalDeger = ws.Cells(i, "J").Value
+
+        If Not IsError(orijinalDeger) Then
+            If IsNumeric(orijinalDeger) And orijinalDeger <> "" Then
+                Dim mesafe As Long
+                mesafe = Abs(i - tepeIndex)
+
+                Dim oranKatSayi As Double
+                oranKatSayi = 1 - (mesafe / maxMesafe)
+
+                If oranKatSayi < 0 Then oranKatSayi = 0
+
+                Dim oran As Double
+                oran = yuzde * oranKatSayi
+
+                ws.Cells(i, "K").Value = orijinalDeger + Abs(orijinalDeger * oran)
+            End If
+        End If
+    Next i
+
+    MsgBox "Simetrik üçgen ağırlıklı çarp
