@@ -1,0 +1,23 @@
+For i = startRow To endRow
+    Dim orijinalDeger As Variant
+    orijinalDeger = ws.Cells(i, "J").Value
+
+    If Not IsError(orijinalDeger) Then
+        If IsNumeric(orijinalDeger) And orijinalDeger <> "" Then
+            Dim oranKatSayi As Double
+            
+            If i < tepeIndex Then
+                oranKatSayi = (i - startRow) / (tepeIndex - startRow)
+            ElseIf i = tepeIndex Then
+                oranKatSayi = 1
+            Else
+                oranKatSayi = (endRow - i) / (endRow - tepeIndex)
+            End If
+
+            Dim oran As Double
+            oran = yuzde * oranKatSayi
+
+            ws.Cells(i, "K").Value = orijinalDeger + Abs(orijinalDeger * oran)
+        End If
+    End If
+Next i
