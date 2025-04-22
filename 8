@@ -1,0 +1,63 @@
+Sub BoslariAtla_TepeyeGoreOranla()
+
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    Dim yuzde As Double
+    yuzde = 0.45 ' Maksimum oran (örneğin %45)
+
+    Dim veriAraligi As Range
+    Set veriAraligi = ws.Range("J2:J100") ' Buraya veri sütununu yaz
+
+    Dim sayisalHücreler As New Collection
+    Dim hücre As Range
+    Dim maxDeger As Double
+    maxDeger = -1E+308
+
+    ' Sayısal hücreleri topla, maksimumu bul
+    For Each hücre In veriAraligi
+        If IsNumeric(hücre.Value) And hücre.Value <> "" Then
+            sayisalHücreler.Add hücre
+            If hücre.Value > maxDeger Then
+                maxDeger = hücre.Value
+            End If
+        End If
+    Next hücre
+
+    ' Maksimum hücrenin index'ini bul
+    Dim tepeIndex As Long
+    For i = 1 To sayisalHücreler.Count
+        If sayisalHücreler(i).Value = maxDeger Then
+            tepeIndex = i
+            Exit For
+        End If
+    Next i
+
+    Dim maxMesafe As Long
+    maxMesafe = Application.WorksheetFunction.Max(tepeIndex - 1, sayisalHücreler.Count - tepeIndex)
+
+    ' Şimdi oranları hesapla
+    For i = 1 To sayisalHücreler.Count
+        Dim orijinalDeger As Variant
+        orijinalDeger = sayisalHücreler(i).Value
+
+        Dim mesafe As Long
+        mesafe = Abs(i - tepeIndex)
+
+        Dim oranKatSayi As Double
+        If maxMesafe = 0 Then
+            oranKatSayi = 1
+        Else
+            oranKatSayi = 1 - (mesafe / maxMesafe)
+        End If
+
+        Dim oran As Double
+        oran = yuzde * oranKatSayi
+
+        ' Sonucu K sütununa yaz
+        sayisalHücreler(i).Offset(0, 1).Value = orijinalDeger + Abs(orijinalDeger * oran)
+    Next i
+
+    MsgBox "Boşlukları atlayarak oranlama tamamlandı. K sütununda sonuçlar var."
+
+End Sub
