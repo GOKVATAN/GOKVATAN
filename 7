@@ -1,0 +1,57 @@
+Sub UcgenOranSifirdanBasla()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    Dim yuzde As Double
+    yuzde = 0.45 ' Maksimum tepe oranı (örnek: %45 için 0.45)
+
+    Dim veriAraligi As Range
+    Set veriAraligi = ws.Range("J2:J100") ' Verilerin olduğu aralık
+
+    Dim maxDeger As Double
+    maxDeger = Application.WorksheetFunction.Max(veriAraligi)
+
+    Dim i As Long, tepeIndex As Long
+    Dim startRow As Long, endRow As Long
+    startRow = veriAraligi.Row
+    endRow = startRow + veriAraligi.Rows.Count - 1
+
+    ' Tepe noktasını bul
+    For i = startRow To endRow
+        If ws.Cells(i, "J").Value = maxDeger Then
+            tepeIndex = i
+            Exit For
+        End If
+    Next i
+
+    ' Maksimum mesafe (tepe noktasına en uzak hücre kaç adım uzakta)
+    Dim maxMesafe As Long
+    maxMesafe = Application.WorksheetFunction.Max(tepeIndex - startRow, endRow - tepeIndex)
+
+    ' Her hücre için oranı hesapla
+    For i = startRow To endRow
+        Dim orijinalDeger As Variant
+        orijinalDeger = ws.Cells(i, "J").Value
+
+        If Not IsError(orijinalDeger) Then
+            If IsNumeric(orijinalDeger) And orijinalDeger <> "" Then
+                Dim mesafe As Long
+                mesafe = Abs(i - tepeIndex)
+
+                Dim oranKatSayi As Double
+                If maxMesafe = 0 Then
+                    oranKatSayi = 1 ' tüm veriler aynı satırdaysa
+                Else
+                    oranKatSayi = 1 - (mesafe / maxMesafe)
+                End If
+
+                Dim oran As Double
+                oran = yuzde * oranKatSayi
+
+                ws.Cells(i, "K").Value = orijinalDeger + Abs(orijinalDeger * oran)
+            End If
+        End If
+    Next i
+
+    MsgBox "İşlem tamamlandı! K sütununa yazıldı."
+End Sub
