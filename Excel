@@ -1,0 +1,66 @@
+Sub YuzdeliCarp()
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Sayfa1") ' Sayfa adını değiştir
+
+    Dim yuzdeOrani As Double
+    yuzdeOrani = ws.Range("C1").Value ' C1 hücresinden yüzde oranı al (%20 için 0.2 gibi)
+
+    Dim veriSatirlari As Collection
+    Set veriSatirlari = New Collection
+
+    Dim i As Long, sonSatir As Long
+    sonSatir = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+
+    ' Sayısal verilerin satır numaralarını topla
+    For i = 1 To sonSatir
+        If IsNumeric(ws.Cells(i, 1).Value) And ws.Cells(i, 1).Value <> "" Then
+            veriSatirlari.Add i
+        End If
+    Next i
+
+    If veriSatirlari.Count = 0 Then
+        MsgBox "Geçerli sayısal veri bulunamadı."
+        Exit Sub
+    End If
+
+    ' Maksimum değeri ve satırını bul
+    Dim maxVal As Double
+    Dim maxIndex As Long
+    maxVal = -1E+308
+
+    For i = 1 To veriSatirlari.Count
+        Dim s As Long
+        s = veriSatirlari(i)
+        If ws.Cells(s, 1).Value > maxVal Then
+            maxVal = ws.Cells(s, 1).Value
+            maxIndex = i ' collection içindeki pozisyon
+        End If
+    Next i
+
+    ' Maksimumdan önce: artan oran
+    For i = 1 To maxIndex - 1
+        Dim oran1 As Double
+        oran1 = yuzdeOrani * i
+        Dim satir1 As Long
+        satir1 = veriSatirlari(i)
+        ws.Cells(satir1, 4).Value = ws.Cells(satir1, 1).Value * (1 + oran1)
+    Next i
+
+    ' Maksimum olan hücre
+    Dim satirMax As Long
+    satirMax = veriSatirlari(maxIndex)
+    ws.Cells(satirMax, 4).Value = ws.Cells(satirMax, 1).Value * (1 + yuzdeOrani * maxIndex)
+
+    ' Maksimumdan sonra: azalan oran
+    For i = maxIndex + 1 To veriSatirlari.Count
+        Dim oran2 As Double
+        oran2 = yuzdeOrani * (veriSatirlari.Count - i + 1)
+        Dim satir2 As Long
+        satir2 = veriSatirlari(i)
+        ws.Cells(satir2, 4).Value = ws.Cells(satir2, 1).Value * (1 + oran2)
+    Next i
+
+    MsgBox "İşlem tamamlandı! Sonuçlar D sütununa yazıldı."
+
+End Sub
