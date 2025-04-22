@@ -1,0 +1,51 @@
+Sub UcgenAgirlikliCarp()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    Dim yuzde As Double
+    yuzde = 0.45 ' Buraya yüzdelik değeri yaz (örneğin %45 için 0.45)
+
+    Dim veriAraligi As Range
+    Set veriAraligi = ws.Range("J2:J100") ' Veri aralığını buradan ayarla
+
+    Dim maxCell As Range
+    Set maxCell = Application.WorksheetFunction.Max(veriAraligi)
+    
+    Dim i As Long, tepeIndex As Long
+    Dim startRow As Long, endRow As Long
+    startRow = veriAraligi.Row
+    endRow = startRow + veriAraligi.Rows.Count - 1
+
+    ' Tepe noktasının satırını bul
+    For i = startRow To endRow
+        If ws.Cells(i, "J").Value = maxCell Then
+            tepeIndex = i
+            Exit For
+        End If
+    Next i
+
+    ' Her hücreye ağırlıklı çarpım uygula
+    For i = startRow To endRow
+        Dim orijinalDeger As Double
+        orijinalDeger = ws.Cells(i, "J").Value
+
+        If orijinalDeger = "" Then GoTo ContinueLoop
+
+        Dim mesafe As Long
+        mesafe = Abs(i - tepeIndex)
+
+        Dim maxMesafe As Long
+        maxMesafe = Application.WorksheetFunction.Max(tepeIndex - startRow, endRow - tepeIndex)
+
+        Dim oran As Double
+        oran = yuzde * (1 - mesafe / maxMesafe)
+
+        If oran < 0 Then oran = 0
+
+        ws.Cells(i, "K").Value = orijinalDeger + (orijinalDeger * oran)
+
+ContinueLoop:
+    Next i
+
+    MsgBox "İşlem tamamlandı. Sonuçlar K sütununda."
+End Sub
