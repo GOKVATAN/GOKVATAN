@@ -1,0 +1,69 @@
+Sub SonundaDogruMakro()
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Sayfa1") ' Sayfanın adı neyse düzelt
+
+    Dim startVal As Double
+    Dim stopVal As Double
+    Dim increment As Double
+    Dim currentVal As Double
+    Dim rowCounter As Long
+    Dim dRow As Long
+    Dim passedZero As Boolean
+    Dim usingDValues As Boolean
+    Dim altVal As Variant
+    
+    startVal = ws.Range("A1").Value
+    stopVal = ws.Range("B1").Value
+    increment = ws.Range("C1").Value
+    currentVal = startVal
+    
+    rowCounter = 2 ' E sütununa yazacağız
+    dRow = 1       ' D sütununa bakarken
+    passedZero = False
+    usingDValues = False
+
+    ws.Range("E:E").ClearContents ' Önce E sütununu temizle
+    ws.Cells(rowCounter, 5).Value = currentVal ' Başlangıç değeri yaz
+
+    Do While currentVal < stopVal
+
+        If Not passedZero Then
+            ' 0'a kadar increment ile git
+            currentVal = currentVal + increment
+            
+            If currentVal >= 0 Then
+                passedZero = True
+                usingDValues = True
+            End If
+            
+        ElseIf usingDValues Then
+            ' D sütunundan veri çekiyoruz
+            Do
+                altVal = ws.Cells(dRow, 4).Value ' D sütunundaki değer
+                
+                If IsEmpty(altVal) Then
+                    ' Eğer D sütununda boş hücre varsa
+                    usingDValues = False ' Artık increment ile devam edeceğiz
+                    Exit Do
+                Else
+                    currentVal = altVal
+                    dRow = dRow + 1
+                    Exit Do
+                End If
+            Loop
+        Else
+            ' D sütunu bitti, increment ile normal devam
+            currentVal = currentVal + increment
+        End If
+
+        rowCounter = rowCounter + 1
+        
+        ' Stop değerini geçtik mi kontrol
+        If currentVal > stopVal Then Exit Do
+        
+        ws.Cells(rowCounter, 5).Value = currentVal
+
+    Loop
+
+End Sub
