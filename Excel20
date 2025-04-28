@@ -1,0 +1,70 @@
+Sub Baslangictan_0a_Sonra_D_Sutunu()
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Sayfa1") ' Sayfa adını kontrol et
+
+    Dim startVal As Double
+    Dim stopVal As Double
+    Dim increment As Double
+    Dim currentVal As Double
+    Dim rowCounter As Long
+    Dim dRow As Long
+    Dim zeroFound As Boolean
+    Dim altVal As Variant
+    
+    startVal = ws.Range("A1").Value
+    stopVal = ws.Range("B1").Value
+    increment = ws.Range("C1").Value
+    currentVal = startVal
+    
+    rowCounter = 2 ' Sonuçları yazacağımız satır (E sütunu)
+    dRow = 1       ' D sütununu taramaya 1. satırdan başlıyoruz
+    zeroFound = False
+    
+    ws.Range("E:E").ClearContents ' Sonuç sütununu temizle
+    
+    ws.Cells(rowCounter, 5).Value = currentVal ' İlk değeri yaz
+    
+    Do While currentVal < stopVal
+        
+        ' Eğer 0 henüz bulunmadıysa başlangıç değerinden increment ile git
+        If Not zeroFound Then
+            currentVal = currentVal + increment
+            
+            rowCounter = rowCounter + 1
+            ws.Cells(rowCounter, 5).Value = currentVal
+            
+            ' Eğer değer tam olarak 0 olursa zeroFound = True yap
+            If currentVal = 0 Then
+                zeroFound = True
+            End If
+            
+        Else
+            ' 0 bulunduysa artık D sütunundaki verileri kullan
+            
+            altVal = ws.Cells(dRow, 4).Value ' D sütunundaki veri
+            
+            If IsEmpty(altVal) Then
+                ' Alternatif veriler bitti, increment ile devam et
+                currentVal = currentVal + increment
+            Else
+                currentVal = altVal
+                dRow = dRow + 1
+            End If
+            
+            rowCounter = rowCounter + 1
+            
+            If currentVal > stopVal Then Exit Do
+            
+            ws.Cells(rowCounter, 5).Value = currentVal
+            
+        End If
+        
+        ' Güvenlik: Eğer başlangıçta 0'dan geçilirse (örneğin increment negatifse), zeroFound aktif olmalı
+        If currentVal = 0 And Not zeroFound Then
+            zeroFound = True
+        End If
+        
+    Loop
+
+End Sub
