@@ -1,0 +1,77 @@
+Sub Baslangictan_D_sonuna_kadar()
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Sayfa1") ' Çalıştığın sayfanın adını düzenle
+    
+    Dim startVal As Double
+    Dim stopVal As Double
+    Dim increment As Double
+    Dim currentVal As Double
+    Dim rowCounter As Long
+    Dim dRow As Long
+    Dim zeroFoundInD As Boolean
+    Dim passedZeroInCalc As Boolean
+    Dim altVal As Variant
+    
+    ' Başlangıç, bitiş ve increment değerlerini oku
+    startVal = ws.Range("A1").Value
+    stopVal = ws.Range("B1").Value
+    increment = ws.Range("C1").Value
+    currentVal = startVal
+    
+    rowCounter = 2 ' E sütununa yazacağız
+    dRow = 1       ' D sütununda ilk satırdan başlayacağız
+    zeroFoundInD = False
+    passedZeroInCalc = False
+    
+    ws.Range("E:E").ClearContents ' Sonuç sütununu temizle
+    ws.Cells(rowCounter, 5).Value = currentVal ' İlk değeri yaz
+
+    Do While currentVal < stopVal
+        
+        If Not passedZeroInCalc Then
+            ' 0'a kadar increment ile git
+            currentVal = currentVal + increment
+            
+            ' 0 veya 0'ı geçtiysek artık D sütunundan veri okumaya başlayacağız
+            If currentVal >= 0 Then
+                passedZeroInCalc = True
+            End If
+            
+        ElseIf Not zeroFoundInD Then
+            ' 0'dan sonra D sütununda ilerle
+            Do
+                altVal = ws.Cells(dRow, 4).Value ' D sütunundaki veri
+                
+                If IsEmpty(altVal) Then
+                    ' D sütununda veri kalmadı
+                    zeroFoundInD = True
+                    Exit Do
+                End If
+                
+                If ws.Cells(dRow - 1, 4).Value = 0 Then
+                    ' Önceki hücre 0 ise bu hücreden itibaren değer çek
+                    currentVal = altVal
+                    dRow = dRow + 1
+                    Exit Do
+                End If
+                
+                dRow = dRow + 1
+                
+            Loop
+            
+        Else
+            ' D sütunu bitti, normal increment ile devam
+            currentVal = currentVal + increment
+        End If
+        
+        rowCounter = rowCounter + 1
+        
+        ' Stop değeri aşılırsa dur
+        If currentVal > stopVal Then Exit Do
+        
+        ws.Cells(rowCounter, 5).Value = currentVal
+        
+    Loop
+
+End Sub
