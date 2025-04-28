@@ -1,0 +1,67 @@
+Sub DogruMakro()
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Sayfa1") ' Sayfa adın burada
+
+    Dim startVal As Double
+    Dim stopVal As Double
+    Dim increment As Double
+    Dim currentVal As Double
+    Dim rowCounter As Long
+    Dim dRow As Long
+    Dim passedZero As Boolean
+    Dim usingDValues As Boolean
+    Dim altVal As Variant
+    
+    startVal = ws.Range("A1").Value
+    stopVal = ws.Range("B1").Value
+    increment = ws.Range("C1").Value
+    currentVal = startVal
+    
+    rowCounter = 2 ' E sütununa yazacağız
+    dRow = 1       ' D sütununu 1. satırdan başlatıyoruz
+    passedZero = False
+    usingDValues = False
+
+    ws.Range("E:E").ClearContents ' Sonuçları temizle
+    ws.Cells(rowCounter, 5).Value = currentVal ' İlk değeri yaz
+
+    Do While currentVal < stopVal
+
+        If Not passedZero Then
+            ' 0'a kadar increment ile git
+            currentVal = currentVal + increment
+            
+            If currentVal >= 0 Then
+                passedZero = True
+                usingDValues = True
+            End If
+            
+        ElseIf usingDValues Then
+            ' D sütunundan veri çekiyoruz
+            altVal = ws.Cells(dRow, 4).Value
+            
+            If IsEmpty(altVal) Then
+                ' D sütunu bitti, increment ile devam edeceğiz
+                usingDValues = False
+                currentVal = currentVal + increment
+            Else
+                currentVal = altVal
+                dRow = dRow + 1
+            End If
+            
+        Else
+            ' D sütunu bitti, increment ile normal devam
+            currentVal = currentVal + increment
+        End If
+
+        rowCounter = rowCounter + 1
+        
+        ' Stop değerine ulaştıysak bitir
+        If currentVal > stopVal Then Exit Do
+        
+        ws.Cells(rowCounter, 5).Value = currentVal
+
+    Loop
+
+End Sub
