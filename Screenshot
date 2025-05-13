@@ -1,0 +1,49 @@
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class User32 {
+    [DllImport("user32.dll")]
+    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+    [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+}
+"@
+
+Add-Type -AssemblyName System.Drawing
+
+# Pencere başlığına göre pencereyi bul
+$windowTitle = "PltLib"  # Buraya PENCERE BAŞLIĞINI doğru şekilde girmen gerek
+$hwnd = [User32]::FindWindow($null, $windowTitle)
+
+if ($hwnd -eq 0) {
+    Write-Host "PltLib penceresi bulunamadı!"
+    exit
+}
+
+# Pencerenin konum ve boyut bilgilerini al
+[User32+RECT]::GetWindowRect($hwnd, [ref]$rect) | Out-Null
+
+$width = $rect.Right - $rect.Left
+$height = $rect.Bottom - $rect.Top
+
+# Pencere boyutunda bitmap oluştur
+$bitmap = New-Object System.Drawing.Bitmap $width, $height
+$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+$graphics.CopyFromScreen($rect.Left, $rect.Top, 0, 0, [System.Drawing.Size]::new($width, $height))
+
+# Masaüstüne kaydet
+$timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+$path = "$env:USERPROFILE\Desktop\PltLibGoruntu_$timestamp.png"
+$bitmap.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
+
+$graphics.Dispose()
+$bitmap.Dispose()
