@@ -1,0 +1,17 @@
+@echo off
+set filename=aktif_pencere.png
+PowerShell -NoProfile -Command ^
+  "$sig = '[DllImport(\"user32.dll\")]public static extern IntPtr GetForegroundWindow(); [DllImport(\"user32.dll\")]public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect); public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }';" ^
+  "Add-Type -MemberDefinition $sig -Name NativeMethods -Namespace Win32;" ^
+  "$hwnd = [Win32.NativeMethods]::GetForegroundWindow();" ^
+  "$rect = New-Object Win32.NativeMethods+RECT;" ^
+  "[Win32.NativeMethods]::GetWindowRect($hwnd, [ref]$rect);" ^
+  "Add-Type -AssemblyName System.Drawing;" ^
+  "$width = $rect.Right - $rect.Left;" ^
+  "$height = $rect.Bottom - $rect.Top;" ^
+  "$bmp = New-Object Drawing.Bitmap $width, $height;" ^
+  "$g = [Drawing.Graphics]::FromImage($bmp);" ^
+  "$g.CopyFromScreen($rect.Left, $rect.Top, 0, 0, $bmp.Size);" ^
+  "$bmp.Save('%filename%');"
+echo Ekran görüntüsü '%filename%' olarak kaydedildi.
+pause
