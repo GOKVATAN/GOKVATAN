@@ -1,0 +1,5 @@
+The main objective is to quantitatively investigate the effect of upstream duct inclination on wake development and aerodynamic losses at different inlet angles. A loss bucket curve is constructed in order to visualize the performance variations depending on the inlet angle in a systematic way. The MISES method uses a viscous/ideal flow coupled solution approach with an implicit Euler solver and boundary layer modeling.
+
+A mesh resolution study is performed to evaluate numerical stability. The grid density is increased both in the flow direction and in the wall-normal direction, and the sensitivity is analyzed in terms of parameters such as blade surface pressure, boundary layer thickness, deflection angle and exit losses.
+
+This study provides comprehensive insights into the interaction between inlet duct geometry and cascade aerodynamics and has practical implications for early stage turbomachinery design, especially under non-uniform inlet flow conditions.
